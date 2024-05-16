@@ -8,25 +8,40 @@ import json
 # COMMAND ----------
 
 def extract_youtube_user_name(text):
-    match = re.search(r'https://www.youtube.com/user/([\w-]+)', text)
-    if match:
-        return match.group(1)
-    else:
+    try:
+        match = re.search(r'https://www.youtube.com/user/([\w-]+)', text)
+        if match:
+            return match.group(1)
+        else:
+            return None
+    except Exception as e:
+        print(f"Error extracting YouTube user name: {e}")
         return None
 
 # COMMAND ----------
 
 def get_youtube_user_id(wiki_name):
-    url = "https://en.wikipedia.org/w/api.php"
-    params = {"action": "parse", "page": wiki_name, "format": "json"}
-    response = requests.get(url, params=params)
-    data = response.json()
-    if 'parse' in data:
-        if 'text' in data['parse']:
+    try:
+        url = "https://en.wikipedia.org/w/api.php"
+        params = {"action": "parse", "page": wiki_name, "format": "json"}
+        response = requests.get(url, params=params)
+        response.raise_for_status() 
+        data = response.json()
+        
+        if 'parse' in data and 'text' in data['parse']:
             text = json.dumps(data['parse']['text'])
             user_name = extract_youtube_user_name(text)
             return user_name
-    return None
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"HTTP request error: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return None
+    except Exception as e:
+        print(f"Error retrieving YouTube user ID: {e}")
+        return None
 
 # COMMAND ----------
 
